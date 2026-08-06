@@ -5,12 +5,14 @@ import { Settings, Target, User, Save, Check, UserCheck, Shield } from 'lucide-r
 import { useAuth } from '@/contexts/auth-context';
 import { TargetExam } from '@/types';
 import { requestGoogleAccessToken } from '@/lib/google/auth';
+import { getGoogleClientId, setGoogleClientId } from '@/lib/google/config';
 
 export default function SettingsPage() {
   const { user, updateUsername, updateGoalHours, updateTargetExams } = useAuth();
   
   const [username, setUsername] = useState(user.displayName || 'Aspirant');
   const [goalHours, setGoalHours] = useState(user.dailyGoalHours || 6);
+  const [customClientId, setCustomClientId] = useState(getGoogleClientId());
   const [selectedExams, setSelectedExams] = useState<TargetExam[]>(user.targetExams || ['CBSE_12', 'JEE_MAIN', 'JEE_ADVANCED']);
   const [saved, setSaved] = useState(false);
 
@@ -110,8 +112,8 @@ export default function SettingsPage() {
               type="button"
               onClick={() => {
                 requestGoogleAccessToken(
-                  (token) => alert('Google OAuth Token Authorized! Tasks, Calendar, and Drive are now connected.'),
-                  (err) => alert('OAuth Popup Triggered: Make sure popups are allowed for localhost.')
+                  (token) => alert('Google OAuth Token Authorized! Tasks, Calendar, and Drive are connected.'),
+                  (err) => console.log('Auth check:', err)
                 );
               }}
               className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all"
@@ -121,8 +123,27 @@ export default function SettingsPage() {
           </div>
 
           <p className="text-xs text-slate-400">
-            Automatically link your StudyOS tasks, revision schedules, and uploaded PDFs with your Google account.
+            Link your StudyOS tasks, revision schedules, and uploaded PDFs with your Google account.
           </p>
+
+          <div className="pt-2">
+            <label className="text-[11px] text-slate-300 font-semibold block mb-1">Google OAuth 2.0 Client ID (from Google Cloud Console)</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customClientId}
+                onChange={(e) => {
+                  setCustomClientId(e.target.value);
+                  setGoogleClientId(e.target.value);
+                }}
+                placeholder="YOUR_CLIENT_ID.apps.googleusercontent.com"
+                className="flex-1 px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white font-mono placeholder-slate-600"
+              />
+            </div>
+            <p className="text-[10px] text-slate-500 mt-1">
+              Create a Web Client ID at <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">console.cloud.google.com</a> and add <code className="text-slate-300">http://localhost:3000</code> to Authorized JavaScript origins.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
@@ -130,7 +151,7 @@ export default function SettingsPage() {
                 <span>Google Tasks</span>
                 <Check className="w-4 h-4 text-emerald-400" />
               </div>
-              <p className="text-[11px] text-slate-400">Syncs Daily Planner to Google Tasks app</p>
+              <p className="text-[11px] text-slate-400">Syncs Daily Planner to Google Tasks</p>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-1">
