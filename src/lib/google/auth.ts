@@ -1,6 +1,6 @@
 'use client';
 
-import { GOOGLE_CONFIG } from './config';
+import { getGoogleClientId } from './config';
 
 declare global {
   interface Window {
@@ -32,11 +32,18 @@ export function requestGoogleAccessToken(
     return;
   }
 
+  const clientId = getGoogleClientId();
+  if (!clientId || clientId === 'demo-google-client-id.apps.googleusercontent.com') {
+    alert('To connect your live Google account, please enter your Google OAuth Client ID in Settings (or .env.local as NEXT_PUBLIC_GOOGLE_CLIENT_ID).');
+    if (onError) onError('Google Client ID not configured');
+    return;
+  }
+
   if (window.google?.accounts?.oauth2) {
     try {
       const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CONFIG.clientId,
-        scope: GOOGLE_CONFIG.scopes,
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file',
         callback: (response: any) => {
           if (response.access_token) {
             storeAccessToken(response.access_token);
@@ -53,13 +60,7 @@ export function requestGoogleAccessToken(
       if (onError) onError(e);
     }
   } else {
-    // Fallback: prompt for access token
-    const token = prompt('Google Identity Services SDK loading. Enter your Google OAuth Access Token if testing:');
-    if (token) {
-      storeAccessToken(token);
-      onSuccess(token);
-    } else if (onError) {
-      onError('Google SDK not ready');
-    }
+    alert('Google Identity SDK initializing. Try again in a moment or verify internet connection.');
+    if (onError) onError('SDK not ready');
   }
 }
